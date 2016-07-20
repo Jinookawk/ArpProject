@@ -52,10 +52,6 @@ struct thread_arg{
 
 void callback(u_char *useless, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
-    /*u_char *tmp=packet;
-    for(int i=0; i<42;i++)
-        printf("%02X ", *tmp++);*/
-
     static int count = 1;
 
     struct libnet_ethernet_hdr *etherhdr;
@@ -316,7 +312,6 @@ int main(int argc, char *argv[])
     int thr_id;
 
     dev = pcap_lookupdev(errbuf);
-    printf("\n ---You opted for device [%s] to capture packets---\n\n Starting capture...\n", dev);
 
     if(dev == NULL){
         printf("\n[%s]\n", errbuf);
