@@ -19,10 +19,8 @@ typedef struct arphdr {
     u_int16_t oper;     /* Operation Code          */
     u_char sha[6];      /* Sender hardware address */
     u_char spa[4];      /* Sender IP address       */
-    //struct in_addr spa;
     u_char tha[6];      /* Target hardware address */
     u_char tpa[4];      /* Target IP address       */
-    //struct in_addr tpa;
 }arphdr_t;
 
 #define MAXBYTES2CAPTURE 2048
@@ -311,6 +309,11 @@ int main(int argc, char *argv[])
     pthread_t thread;
     int thr_id;
 
+    if(argc != 2){
+        printf("Please input victim IP\n");
+        return -1;
+    }
+
     dev = pcap_lookupdev(errbuf);
 
     if(dev == NULL){
@@ -338,6 +341,8 @@ int main(int argc, char *argv[])
     for(int i=0;i<6;i++){
         test.ether_shost[i]=mac[i];
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     test.ether_type=htons(ETHERTYPE_ARP);
 
@@ -395,7 +400,7 @@ int main(int argc, char *argv[])
             printf(":");
     }
 
-    //////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     for(int i=0; i<6; i++){
         test.ether_dhost[i]=0xFF;
