@@ -180,7 +180,7 @@ int getMyMacAddress(unsigned char *mac)
 char* rtrim(char* s) {
     char t[MAX_STR_LEN];
     char *end;
-    strcpy(t, s); // 이것은 Visual C 2005용
+    strcpy(t, s);
     end = t + strlen(t) - 1;
     while (end != t && isspace(*end))
         end--;
@@ -334,6 +334,8 @@ int main(int argc, char *argv[])
     getMyMacAddress(mac);
     gatewayip=getGatewayIP();
 
+    ////////////////////////////////////////////////////////////////////////////////
+
     for(int i=0; i<6; i++){
         test.ether_dhost[i]=0xFF;
     }
@@ -341,8 +343,6 @@ int main(int argc, char *argv[])
     for(int i=0;i<6;i++){
         test.ether_shost[i]=mac[i];
     }
-
-    ////////////////////////////////////////////////////////////////////////////////
 
     test.ether_type=htons(ETHERTYPE_ARP);
 
